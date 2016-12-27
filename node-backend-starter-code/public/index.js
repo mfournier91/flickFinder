@@ -33,20 +33,28 @@ window.onload = init;
       //show the page that corresponds with the current view
       var page = document.getElementById(view);
       page.style.display = '';
+      //determine how to proceed
+      if (view == 'showPage') {
+        var movieId = location.hash.slice(1).split('/movie/')[1];
+        console.log(movieId);
+        getJSON('https://omdbapi.com/?i='+movieId, view);
+      }
+
     }
 
     window.addEventListener("hashchange", router, false);  // run the router function again whenever the hash changes
 
 
 
-    function getJSON(myUrl) {  // function that allows us to request json from a url; executes when we query our api
+    function getJSON(myUrl, view) {  // function that allows us to request json from a url; executes when we query our api
       var request = new XMLHttpRequest();
       request.open('GET', myUrl, true);
 
       request.onload = function() {
         if (request.status >= 200 && request.status < 400) {
           var data = JSON.parse(request.responseText);
-          handleData(data); //once the data is parsed handle the data
+          console.log(data);
+          handleData(data, view); //once the data is parsed handle the data
         } else {
           console.log('The target server returned an error');
         }
@@ -58,17 +66,18 @@ window.onload = init;
       request.send()
     }
 
-    function handleData(data){ //function for handling data
-      //Delete previous search results
-      var searchResults = document.getElementById('searchResults');
-      searchResults.parentNode.removeChild(searchResults);
-      //add in the div that was deleted but now empty
-      searchResults = document.createElement('div');
-      searchResults.setAttribute('id', 'searchResults');
-      searchPage.appendChild(searchResults);
+    function handleData(data, view){ //function for handling data
 
       //If the data has a property search we know it came from the search api which returns an array of movies
       if(data["Search"]) {
+        //Delete previous search results
+        var searchResults = document.getElementById('searchResults');
+        searchResults.parentNode.removeChild(searchResults);
+        //add in the div that was deleted but now empty
+        searchResults = document.createElement('div');
+        searchResults.setAttribute('id', 'searchResults');
+        searchPage.appendChild(searchResults);
+
         data["Search"].forEach((movie) => { //for each movie
 
           var showLink = document.createElement('a'); //create a link to the individual movie
@@ -94,16 +103,51 @@ window.onload = init;
           searchResults.appendChild(movieDiv);
         })
       }
+      else if (data["Title"] && view == 'showPage'){
+        console.log('render the show data');
+        //Delete previous show result
+        var showResult = document.getElementById('showResult');
+        showResult.parentNode.removeChild(showResult);
+        //add in the div that was deleted but now empty
+        showResult = document.createElement('div');
+        showResult.setAttribute('id', 'showResult');
+        showPage.appendChild(showResult);
+
+        //Title
+        var title = document.createTextNode(data["Title"]);
+        var titleH = document.createElement('h2');
+        titleH.appendChild(title);
+        showResult.appendChild(titleH);
+        //Poster
+        var posterImg = document.createElement('img');
+        posterImg.setAttribute('src', data["Poster"]);
+        posterImg.setAttribute('alt', data["Title"]);
+        showResult.appendChild(posterImg);
+        //Plot
+        var plot = document.createTextNode(data["Plot"]);
+        var plotP = document.createElement('p');
+        plotP.appendChild(plot);
+        showResult.appendChild(plotP);
+        //Genre
+        var genre = document.createTextNode(data["Genre"]);
+        var genreH = document.createElement('h5');
+        genreH.appendChild(genre);
+        showResult.appendChild(genreH);
+        //To Do: add button to add to favorites.
+
+      }
     }
 
     //get the searh form
     var searchForm = document.getElementById('searchForm');
     var searchPage = document.getElementById('searchPage');
+    var showPage = document.getElementById('showPage');
+    var favoritePage = document.getElementById('favoritePage');
     searchForm.addEventListener('submit', function(e) { //add a listener for submit
       e.preventDefault();
       var searchTerm = e.target.title.value;
       searchTerm = searchTerm.split(' ').join('%20'); //format the search term correctly
-      getJSON('https://omdbapi.com/?s=' + searchTerm); //query the api
+      getJSON('https://omdbapi.com/?s=' + searchTerm, 'searchPage'); //query the api
     });
 
 
