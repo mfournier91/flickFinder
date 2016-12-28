@@ -132,7 +132,15 @@ window.onload = init;
         var genreH = document.createElement('h5');
         genreH.appendChild(genre);
         showResult.appendChild(genreH);
-        //To Do: add button to add to favorites.
+        // add button to add to favorites.
+        var favText = document.createTextNode('Favorite This ♡')
+        var favButton = document.createElement('button');
+        favButton.appendChild(favText);
+        favButton.addEventListener('click', function() { // run the favoriteMovie function on click
+          favoriteMovie(data["Title"], data["imdbID"]);
+          this.setAttribute('disabled', true); // disable button so its evident it was clicked.
+        });
+        showResult.appendChild(favButton);
 
       }
       else if(view == 'favoritesPage') {
@@ -156,6 +164,15 @@ window.onload = init;
 
         })
       }
+    }
+
+    function favoriteMovie(name, oid) {
+      var request = new XMLHttpRequest();
+      var postUrl = window.location.href.split('/#/')[0] + '/favorites'  // url to the correct port
+      var requestSting = "name=" + name + "&oid=" + oid; // data to send
+      request.open('POST', postUrl, true); // make a post request
+      request.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
+      request.send(requestSting);
     }
 
     //get the searh form

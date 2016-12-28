@@ -23,7 +23,17 @@ app.post('/favorites', function(req, res){ //post a movie to favorites
   }
 
   var data = JSON.parse(fs.readFileSync('./data.json')); //get all the data from file and set to a variable
+  var repeatedData = (function(){ // check if data contains same oid in request
+    for(i in data) {
+      if (data[i]["oid"] == req.body["oid"]) {
+        return true;
+      }
+    }
+    return false;
+  })();
+  if (!repeatedData){ // verify the uniqueness of request
   data.push(req.body); //add body of request to variable
+  }
   fs.writeFile('./data.json', JSON.stringify(data)); // save the variables new data to the file
   res.setHeader('Content-Type', 'application/json');
   res.send(data); //send back the new data as a response
