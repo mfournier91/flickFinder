@@ -5,7 +5,6 @@ window.onload = init;
     var router = function(){ //function to make a client side router
       var url = location.hash.slice(1) || '/'; //gets the url after a hash. /#/ = /
       var view;
-      console.log(url);
       var routes = {  // create routes which correspond to views
         '/' : 'searchPage',
         '/favorites' : 'favoritesPage'
@@ -36,8 +35,11 @@ window.onload = init;
       //determine how to proceed
       if (view == 'showPage') {
         var movieId = location.hash.slice(1).split('/movie/')[1];
-        console.log(movieId);
-        getJSON('https://omdbapi.com/?i='+movieId, view);
+        getJSON('https://omdbapi.com/?i='+movieId, view); //querying a different api than for search; also pass down view so our data handling function knows what to do
+      }
+      else if (view == 'favoritesPage') {
+        var baseUrl = window.location.href.split('/#/')[0]; //get the baseUrl for our api local host 3000 or whichever port
+        getJSON(baseUrl + '/favorites', view); //query the favorites route of our api
       }
 
     }
@@ -53,7 +55,6 @@ window.onload = init;
       request.onload = function() {
         if (request.status >= 200 && request.status < 400) {
           var data = JSON.parse(request.responseText);
-          console.log(data);
           handleData(data, view); //once the data is parsed handle the data
         } else {
           console.log('The target server returned an error');
@@ -67,7 +68,6 @@ window.onload = init;
     }
 
     function handleData(data, view){ //function for handling data
-
       //If the data has a property search we know it came from the search api which returns an array of movies
       if(data["Search"]) {
         //Delete previous search results
@@ -104,7 +104,6 @@ window.onload = init;
         })
       }
       else if (data["Title"] && view == 'showPage'){
-        console.log('render the show data');
         //Delete previous show result
         var showResult = document.getElementById('showResult');
         showResult.parentNode.removeChild(showResult);
@@ -136,13 +135,34 @@ window.onload = init;
         //To Do: add button to add to favorites.
 
       }
+      else if(view == 'favoritesPage') {
+        //Delete previous favorites results
+        var favoritesResults = document.getElementById('favoritesResults');
+        favoritesResults.parentNode.removeChild(favoritesResults);
+        //add in the div that was deleted but now empty
+        favoritesResults = document.createElement('ul');
+        favoritesResults.setAttribute('id', 'favoritesResults');
+        favoritesPage.appendChild(favoritesResults);
+        data.forEach((movie) => {
+          //link
+          var showLink = document.createElement('a');
+          showLink.setAttribute('href', '#/movie/' + movie['oid']);
+          //title
+          var title = document.createTextNode(movie['name']);
+          var titleItem = document.createElement('li');
+          showLink.appendChild(title);
+          titleItem.appendChild(showLink);
+          favoritesResults.appendChild(titleItem);
+
+        })
+      }
     }
 
     //get the searh form
     var searchForm = document.getElementById('searchForm');
     var searchPage = document.getElementById('searchPage');
     var showPage = document.getElementById('showPage');
-    var favoritePage = document.getElementById('favoritePage');
+    var favoritesPage = document.getElementById('favoritesPage');
     searchForm.addEventListener('submit', function(e) { //add a listener for submit
       e.preventDefault();
       var searchTerm = e.target.title.value;
